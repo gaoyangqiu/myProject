@@ -8,26 +8,30 @@
       <el-button type="info" @click="logout">退出</el-button>
     </el-header>
     <el-container>
-      <el-aside width="200px">
+      <el-aside :width="isCollapse ? '64px' : '200px'">
+        <div class="toggle-button" @click="toggleCollapse">|||</div>
         <el-menu
           background-color="#333744"
           text-color="#fff"
-          active-text-color="#ffd04b">
-          <el-submenu index="1">
+          active-text-color="#409EFF" :unique-opened="true" :collapse="isCollapse"
+          :collapse-transition="false" :router="true" :default-active="$route.path">
+          <el-submenu :index="item.id + ''" v-for="item in menuList" :key="item.id">
             <template slot="title">
-              <i class="el-icon-location"></i>
-              <span>导航一</span>
+              <i :class="item.menuIcon"></i>
+              <span>{{ item.menuName }}</span>
             </template>
-            <el-menu-item index="1-4-1">
+            <el-menu-item :index="subItem.menuUrl" v-for="subItem in item.subMenuLink" :key="subItem.id">
               <template slot="title">
-                <i class="el-icon-location"></i>
-                <span>导航一</span>
+                <i :class="subItem.menuIcon"></i>
+                <span>{{ subItem.menuName }}</span>
               </template>
             </el-menu-item>
           </el-submenu>
         </el-menu>
       </el-aside>
-      <el-main>Main</el-main>
+      <el-main>
+        <router-view></router-view>
+      </el-main>
     </el-container>
   </el-container>
 </template>
@@ -35,10 +39,29 @@
 <script>
 export default {
   name: 'Home',
+  data () {
+    return {
+      menuList: [],
+      isCollapse: false
+    }
+  },
+  created () {
+    this.getMenuList()
+  },
   methods: {
     logout () {
       window.sessionStorage.clear()
       this.$router.push('/login')
+    },
+    async getMenuList () {
+      const { data: res } = await this.$http.get('menu/getAllMenus')
+      if (res.code !== 200) return this.$message.error(res.message)
+      this.menuList = res.data
+      console.info(this.menuList)
+    },
+    // 切换按钮展开
+    toggleCollapse () {
+      this.isCollapse = !this.isCollapse
     }
   }
 }
@@ -70,9 +93,23 @@ export default {
 
 .el-aside {
   background: #333744;
+
+  .el-menu {
+    border-right: none;
+  }
 }
 
 .el-main {
   background: #eaedf1;
+}
+
+.toggle-button {
+  background-color: #4A5064;
+  font-size: 10px;
+  line-height: 24px;
+  color: #fff;
+  text-align: center;
+  letter-spacing: 0.2em;
+  cursor: pointer;
 }
 </style>
